@@ -1,6 +1,4 @@
-# CMF-ErrNet: executable method-level reproduction
 
-Based on the user-provided manuscript **“Spatio-Temporal Multimodal Fusion for Exercise Error Recognition: A Cross-Modal Attention Framework Integrating Video Pose Estimation and Inertial Measurement.”**
 
 ## What is implemented
 - Pose encoder accepting joint-wise **HRNet-W48-derived 256-dimensional** features for **17** COCO joints. Nine-frame joint-wise depthwise temporal convolution.
@@ -49,18 +47,6 @@ python train.py --data /path/to/your_multimodal_64frame_clips.npz \
 python train.py --data /path/to/your_multimodal_64frame_clips.npz \
   --ablation pose_only --out runs/pose_only
 ```
-
-## Key limitations vs. an exact paper replication
-
-1. The manuscript specifies HRNet-W48 COCO-pretrained fine-tuning on RGB frames but does not supply model weights, dataset-specific fine-tuning code, or a precise definition of **per-joint 256-d heatmap-derived embeddings**. This repo starts at **extracted joint features**, not raw RGB pixels. Thus no claim of end-to-end HRNet replication is made.
-2. Paper's `DepthwiseConv3D` is underspecified on its given `[T,J,256]` representation. We use **depthwise temporal Conv1d** on each joint feature channel with a 9-frame kernel.
-3. The paper's residual cross attention formula adds a 128-d vector directly to a 256-d pose feature. We explicitly project pose to 128 dims **before residual addition** to resolve the mismatch, and implement the reverse sensor→joint attention described in prose.
-4. The paper's gate equations use a 2-vector context and a second 2×2 projection. A compact MLP directly outputs the **two gate logits**; mathematically equivalent in expressiveness with a learned final linear layer.
-5. Instead of non-differentiable `argmax` phase labels inside training, phase conditioning uses **soft phase probabilities**; inference can still use predicted phases. This allows the error loss to backpropagate to the phase head.
-6. The original description names a severity regression head but **does not provide severity annotations or its training objective**. We output a [0,1] severity prediction but default to **zero severity-loss weight**; scores are uncalibrated without labels.
-7. The benchmark sources named in the manuscript do **not automatically constitute matched RGB+4-IMU+per-frame error/phase records**. A paired, labeled dataset with the same exercise and participant on both streams is required. Dataset conversion and numbers in Tables 1–3 cannot be validated from the manuscript alone.
-8. Exact error label taxonomy, sensor locations, clock calibration, zero-phase clipping policy, local calibration transformation, and train/test subject IDs are not specified. Choices here are transparent implementation assumptions.
-9. Evaluation gives frame-wise macro metrics. Manuscript refers to clip accuracy and binary ROC AUC, but does not define a clip aggregation rule or map of error classes to positive labels. Define these per dataset before comparing paper tables.
 
 ## Files
 
